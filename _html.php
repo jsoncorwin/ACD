@@ -2,13 +2,12 @@
 /* Include JS for polling calls */
 OpenVBX::addJS('script.js');
 	
-function claim($client, $conferenceSid, $phoneNumber,$account)
+function claim($client, $conferenceSid, $callerId, $phoneNumber,$account)
 {
     $twiml = "<Response><Dial><Conference startConferenceOnEnter='true' endConferenceOnExit='true' beep='false'>$conferenceSid</Conference></Dial></Response>";
-
     $response = $client->request("Accounts/".$account."/Calls",
                                  "POST",
-                                 array("Caller" => "6509241936",
+                                 array("Caller" => "$callerId",
                                        "Called" => "$phoneNumber",
                                        "Url" => "http://twimlets.com/echo?Twiml=".urlencode($twiml)));
 
@@ -23,13 +22,14 @@ $user_id = $ci->session->userdata('user_id');
 $user = VBX_User::get($user_id);
 
 $base_uri="Accounts/".$this->twilio_sid;
-
 $claiming_conf = "";
 if(array_key_exists('claim',$_REQUEST))
 {
     $claiming_conf=$_REQUEST['claim'];
     $claim_phone_number=$user->devices[0]->value;
-    claim($client, $claiming_conf, $claim_phone_number, $this->twilio_sid);
+    $numbers = $ci->vbx_incoming_numbers->get_numbers();
+	if(count($numbers) > 0)
+    	claim($client, $claiming_conf, $numbers[0]->name, $claim_phone_number, $this->twilio_sid);
 }
 
 ?>
